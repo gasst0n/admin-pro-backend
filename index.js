@@ -8,6 +8,10 @@ const app = express();
 
 app.use(cors());
 
+// Carpeta publica
+
+app.use(express.static("public"));
+
 // Lectura y parseo del BODY
 app.use(express.json());
 
@@ -22,6 +26,11 @@ console.log(process.env);
 // Crear el servidor EXPRESS
 
 // RUTAS
+
+const swaggerUI = require("swagger-ui-express");
+const swaggerSpec = require("./docs/swagger");
+
+app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
 app.use("/api/usuarios", require("./routes/usuarios"));
 app.use("/api/hospitales", require("./routes/hospitales"));
