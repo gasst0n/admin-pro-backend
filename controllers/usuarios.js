@@ -81,7 +81,8 @@ const actualizarUsuarios = async (req, res = response) => {
         msg: "no existe un usuario por ese ID",
       });
     }
-    // ACTUALIZACIONES
+
+    // 🔹 ACTUALIZACIONES
     const { password, google, email, ...campos } = req.body;
 
     if (usuarioDB.email !== email) {
@@ -93,15 +94,32 @@ const actualizarUsuarios = async (req, res = response) => {
         });
       }
     }
-
-    campos.email = email;
+    if (!usuarioDB.google) {
+      campos.email = email;
+    } else if (usuarioDB.email !== email) {
+      return res.status(400).json({
+        ok: false,
+        msg: "Usuario de Google no pueden cambiar su email",
+      });
+    }
 
     delete campos.password;
     delete campos.google;
 
-    const usuarioActualizado = await Usuario.findByIdAndUpdate(uid, campos, {
-      new: true,
+    const usuarioActualizadoDB = await Usuario.findByIdAndUpdate(uid, campos, {
+      returnDocument: "after",
+      runValidators: true,
     });
+
+    // 🔥 NORMALIZAMOS (CLAVE TOTAL)
+    const usuarioActualizado = {
+      uid: usuarioActualizadoDB._id,
+      nombre: usuarioActualizadoDB.nombre,
+      email: usuarioActualizadoDB.email,
+      role: usuarioActualizadoDB.role,
+      google: usuarioActualizadoDB.google || false,
+      img: usuarioActualizadoDB.img || "",
+    };
 
     res.json({
       ok: true,
@@ -115,7 +133,6 @@ const actualizarUsuarios = async (req, res = response) => {
     });
   }
 };
-
 const borrarUsuario = async (req, res = response) => {
   const uid = req.params.id;
 

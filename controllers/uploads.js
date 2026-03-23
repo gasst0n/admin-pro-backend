@@ -4,84 +4,110 @@ const { response } = require("express");
 const { v4: uuidv4 } = require("uuid");
 const { actualizarImagen } = require("../helpers/actualizar-imagen");
 
+// =============================
+// SUBIR ARCHIVO
+// =============================
 const fileUpload = (req, res = response) => {
-  const tipo = req.params.tipo;
-  const id = req.params.id;
+  const { tipo, id } = req.params;
 
   const tiposValidos = ["hospitales", "medicos", "usuarios"];
   if (!tiposValidos.includes(tipo)) {
     return res.status(400).json({
       ok: false,
-      msg: "No es un medico, usuario u hospital (tipo)",
+      msg: "Tipo no válido (hospitales, medicos, usuarios)",
     });
   }
 
-  // VALIDAR QUE EXISTA UN ARCHIVO
-
+  // Validar archivo
   if (!req.files || Object.keys(req.files).length === 0) {
     return res.status(400).json({
       ok: false,
-      msg: "No hay ningun archivo",
+      msg: "No hay ningún archivo",
     });
   }
 
-  // PROCESAR LA IMAGEN
   const file = req.files.imagen;
 
-  const nombreCortado = file.name.split("."); // corta extension
-  const extensionArchivo = nombreCortado[nombreCortado.length - 1];
+  // Validar extensión
+  const nombreCortado = file.name.split(".");
+  const extensionArchivo =
+    nombreCortado[nombreCortado.length - 1].toLowerCase();
 
   const extensionesValidas = ["png", "jpg", "jpeg", "gif"];
   if (!extensionesValidas.includes(extensionArchivo)) {
     return res.status(400).json({
       ok: false,
-      msg: "No es una extension valida",
+      msg: "Extensión no válida",
     });
   }
 
-  // Generar el nombre de archivo
-
+  // Generar nombre único
   const nombreArchivo = `${uuidv4()}.${extensionArchivo}`;
 
-  // Path para guardar IMAGEN
+  // Path correcto (IMPORTANTE no pisar "path")
+  const filePath = path.join(__dirname, `../uploads/${tipo}/${nombreArchivo}`);
 
-  const path = `./uploads/${tipo}/${nombreArchivo}`;
+  // Crear carpeta si no existe (pro)
+  const dirPath = path.dirname(filePath);
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
 
-  // Mover la imagen
-
-  file.mv(path, (err) => {
+  // Mover archivo
+  file.mv(filePath, (err) => {
     if (err) {
-      console.log(err);
+      console.error("Error moviendo archivo:", err);
       return res.status(500).json({
         ok: false,
         msg: "Error al mover la imagen",
       });
     }
+
+    // Actualizar DB (después de guardar correctamente)
+    actualizarImagen(tipo, id, nombreArchivo);
+
     res.json({
       ok: true,
       msg: "Archivo subido",
       nombreArchivo,
     });
   });
-
-  // Actualizacion base de datos
-
-  actualizarImagen(tipo, id, nombreArchivo);
 };
 
+// =============================
+// RETORNAR IMAGEN
+// =============================
 const retornaImagen = (req, res) => {
-  const tipo = req.params.tipo;
-  const foto = req.params.foto;
+  const { tipo, foto } = req.params;
 
   const pathImg = path.join(__dirname, `../uploads/${tipo}/${foto}`);
 
-  // imagen por defecto
   if (fs.existsSync(pathImg)) {
-    res.sendFile(pathImg);
-  } else {
-    const pathImg = path.join(__dirname, `../uploads/noimg.jpg`);
-    res.sendFile(pathImg);
+    return res.sendFile(
+      pathImg,
+      {
+        headers: {
+          "Content-Type": "image/jpeg",
+        },
+      },
+      (err) => {
+        if (err) {
+          console.error("Error enviando imagen:", err);
+          res.status(500).send("Error al cargar imagen");
+        }
+      },
+    );
   }
+
+  // Imagen por defecto
+  const pathNoImg = path.join(__dirname, `../uploads/noimg.jpg`);
+
+  return res.sendFile(pathNoImg, (err) => {
+    if (err) {
+      console.error("Error enviando imagen default:", err);
+      res.status(500).send("Error al cargar imagen por defecto");
+    }
+  });
 };
 
 module.exports = {

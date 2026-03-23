@@ -8,11 +8,13 @@ const { fileUpload, retornaImagen } = require("../controllers/uploads");
 
 const router = Router();
 
+// Middleware global (solo una vez)
 router.use(expressFileUpload());
 
-router.put("/:tipo/:id", validarJWT, fileUpload, expressFileUpload);
-router.get("/:tipo/:foto", retornaImagen);
+// SUBIR IMAGEN
+router.put("/:tipo/:id", validarJWT, fileUpload);
 
-// Siempre exportar archivos de rutas
+// OBTENER IMAGEN
+router.get("/:tipo/:foto", retornaImagen);
 
 module.exports = router;
