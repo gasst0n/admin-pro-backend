@@ -1,71 +1,54 @@
 const fs = require("fs");
+const path = require("path");
 
 const Usuario = require("../models/usuario");
 const Medico = require("../models/medico");
 const Hospital = require("../models/hospital");
 
-let pathViejo = "";
-
-const borrarImagen = (path) => {
-  if (fs.existsSync(pathViejo)) {
-    // borrar imagen anterior
-    fs.unlinkSync(pathViejo);
+const borrarImagen = (pathImagen) => {
+  if (pathImagen && fs.existsSync(pathImagen)) {
+    fs.unlinkSync(pathImagen);
   }
 };
 
 const actualizarImagen = async (tipo, id, nombreArchivo) => {
+  let modelo;
+  let pathViejo;
+
   switch (tipo) {
-    case "medicos":
-      const medico = await Medico.findById(id);
+    case "usuarios":
+      modelo = await Usuario.findById(id);
+      if (!modelo) throw new Error("Usuario no existe");
 
-      if (!medico) {
-        console.log("No es un medico por ID");
-        return false;
-      }
-
-      pathViejo = `./uploads/medicos/${medico.img}`;
-      borrarImagen(pathViejo);
-
-      medico.img = nombreArchivo;
-      await medico.save();
-
-      return true;
+      pathViejo = path.join(__dirname, `../uploads/usuarios/${modelo.img}`);
+      break;
 
     case "hospitales":
-      const hospital = await Hospital.findById(id);
+      modelo = await Hospital.findById(id);
+      if (!modelo) throw new Error("Hospital no existe");
 
-      if (!hospital) {
-        console.log("No es un medico por ID");
-        return false;
-      }
+      pathViejo = path.join(__dirname, `../uploads/hospitales/${modelo.img}`);
+      break;
 
-      pathViejo = `./uploads/hospitales/${hospital.img}`;
-      borrarImagen(pathViejo);
+    case "medicos":
+      modelo = await Medico.findById(id);
+      if (!modelo) throw new Error("Medico no existe");
 
-      hospital.img = nombreArchivo;
-      await hospital.save();
-
-      return true;
-
-    case "usuarios":
-      const usuario = await Usuario.findById(id);
-
-      if (!usuario) {
-        console.log("No es un medico por ID");
-        return false;
-      }
-
-      pathViejo = `./uploads/usuarios/${usuario.img}`;
-      borrarImagen(pathViejo);
-
-      usuario.img = nombreArchivo;
-      await usuario.save();
-
-      return true;
+      pathViejo = path.join(__dirname, `../uploads/medicos/${modelo.img}`);
+      break;
 
     default:
-      break;
+      throw new Error("Tipo no soportado");
   }
+
+  // Borrar imagen anterior (si existe)
+  borrarImagen(pathViejo);
+
+  // Guardar nueva imagen
+  modelo.img = nombreArchivo;
+  await modelo.save();
+
+  return true;
 };
 
 module.exports = {
