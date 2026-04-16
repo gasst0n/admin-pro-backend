@@ -8,10 +8,10 @@ const app = express();
 
 app.use(cors());
 
-// Servir carpeta pública
+// Servir carpeta pública (Angular build)
 app.use(express.static("public"));
 
-// Lectura y parseo del body
+// Parseo de JSON
 app.use(express.json());
 
 // Conexión a base de datos
@@ -33,11 +33,11 @@ app.use("/api/todo", require("./routes/busquedas"));
 app.use("/api/upload", require("./routes/uploads"));
 
 /**
- * ✅ CATCH-ALL PARA ANGULAR
- * Express 5 NO acepta "*"
- * Se debe usar "/*"
+ * ✅ CATCH-ALL PARA ANGULAR (EXPRESS 5)
+ * ❗ NO usar "*", "/*"
+ * ✅ Usar REGEX
  */
-app.get("/*", (req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(path.resolve(__dirname, "public/index.html"));
 });
 
@@ -50,4 +50,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("Servidor corriendo en puerto", PORT);
 });
-``;
