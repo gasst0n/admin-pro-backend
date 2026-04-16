@@ -24,7 +24,7 @@ const swaggerSpec = require("./docs/swagger");
 
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
-// Rutas
+// Rutas API
 app.use("/api/usuarios", require("./routes/usuarios"));
 app.use("/api/hospitales", require("./routes/hospitales"));
 app.use("/api/medicos", require("./routes/medicos"));
@@ -33,18 +33,21 @@ app.use("/api/todo", require("./routes/busquedas"));
 app.use("/api/upload", require("./routes/uploads"));
 
 /**
- * ✅ PUERTO
- * Render inyecta el puerto en process.env.PORT
- * En local usa 3000
+ * ✅ CATCH-ALL PARA ANGULAR
+ * Express 5 NO acepta "*"
+ * Se debe usar "/*"
  */
-const PORT = process.env.PORT || 3000;
-
-// LO ULTIMO
-
-app.get("*", (req, res) => {
+app.get("/*", (req, res) => {
   res.sendFile(path.resolve(__dirname, "public/index.html"));
 });
+
+/**
+ * ✅ PUERTO
+ * Render inyecta el puerto dinámico
+ */
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
   console.log("Servidor corriendo en puerto", PORT);
 });
+``;
