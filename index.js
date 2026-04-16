@@ -1,37 +1,29 @@
 const express = require("express");
-
 require("dotenv").config();
 
-//CORS
+// CORS
 const cors = require("cors");
 const app = express();
 
 app.use(cors());
 
-// Carpeta publica
-
+// Servir carpeta pública
 app.use(express.static("public"));
 
-// Lectura y parseo del BODY
+// Lectura y parseo del body
 app.use(express.json());
 
+// Conexión a base de datos
 const { dbConnection } = require("./Databases/config");
-
-// Base de datos
-
 dbConnection();
 
-console.log(process.env);
-
-// Crear el servidor EXPRESS
-
-// RUTAS
-
+// Swagger
 const swaggerUI = require("swagger-ui-express");
 const swaggerSpec = require("./docs/swagger");
 
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
+// Rutas
 app.use("/api/usuarios", require("./routes/usuarios"));
 app.use("/api/hospitales", require("./routes/hospitales"));
 app.use("/api/medicos", require("./routes/medicos"));
@@ -39,11 +31,13 @@ app.use("/api/login", require("./routes/auth"));
 app.use("/api/todo", require("./routes/busquedas"));
 app.use("/api/upload", require("./routes/uploads"));
 
-// Database
+/**
+ * ✅ PUERTO
+ * Render inyecta el puerto en process.env.PORT
+ * En local usa 3000
+ */
+const PORT = process.env.PORT || 3000;
 
-// mean_user
-// g3FtrH2arfc9WfL8
-
-// PUERTO
-
-app.listen(3000, () => console.log("Servidor corriendo en puerto ", 3000));
+app.listen(PORT, () => {
+  console.log("Servidor corriendo en puerto", PORT);
+});
